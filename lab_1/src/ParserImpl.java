@@ -70,7 +70,6 @@ public class ParserImpl implements Parser {
             } else if (token instanceof ParenthesisExpressionImpl bracket) {
                 if (bracket.bracket_type == BracketType.OPEN) {
                     stack.push(token);
-                    result.add(token);
                 } else {
                     while ((!(stack.peek() instanceof ParenthesisExpressionImpl)) ||
                             (((ParenthesisExpressionImpl) stack.peek()).bracket_type != BracketType.OPEN)) {
@@ -78,8 +77,8 @@ public class ParserImpl implements Parser {
                         stack.pop();
                     }
                     stack.pop();
-                    result.add(token);
                 }
+                result.add(token);
             }
         }
         while (!stack.empty()) {

@@ -1,8 +1,8 @@
-public class TreeVisitor implements ExpressionVisitor {
+public class DepthTreeVisitor implements ExpressionVisitor {
 
-    private TreeVisitor() {}
+    private DepthTreeVisitor() {}
 
-    public static TreeVisitor INSTANCE = new TreeVisitor();
+    public static DepthTreeVisitor INSTANCE = new DepthTreeVisitor();
 
     @Override
     public Object visitBinaryExpression(BinaryExpression expr) {
