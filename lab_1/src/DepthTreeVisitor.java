@@ -1,28 +1,28 @@
-public class DepthTreeVisitor implements ExpressionVisitor {
+public class DepthTreeVisitor implements ExpressionVisitor<Integer> {
 
     private DepthTreeVisitor() {}
 
-    public static DepthTreeVisitor INSTANCE = new DepthTreeVisitor();
-
     @Override
-    public Object visitBinaryExpression(BinaryExpression expr) {
-        int depth_of_lexpr = (int) expr.getLeft().accept(this);
-        int depth_of_rexpr = (int) expr.getRight().accept(this);
-        return depth_of_lexpr > depth_of_rexpr ? depth_of_lexpr + 1 : depth_of_rexpr + 1;
+    public Integer visitBinaryExpression(BinaryExpression expr) {
+        int depthOfLexpr = expr.getLeft().accept(this);
+        int depthOfRexpr = expr.getRight().accept(this);
+        return depthOfLexpr > depthOfRexpr ? depthOfLexpr + 1 : depthOfRexpr + 1;
     }
 
     @Override
-    public Object visitLiteral(Literal expr) {
+    public Integer visitLiteral(Literal expr) {
         return 1;
     }
 
     @Override
-    public Object visitVariable(Variable expr) {
+    public Integer visitVariable(Variable expr) {
         return 1;
     }
 
     @Override
-    public Object visitParenthesis(ParenthesisExpression expression) {
-        return (int) expression.getExpr().accept(this) + 1;
+    public Integer visitParenthesis(ParenthesisExpression expression) {
+        return expression.getExpr().accept(this) + 1;
     }
+
+    public static ExpressionVisitor<Integer> INSTANCE = new DepthTreeVisitor();
 }
