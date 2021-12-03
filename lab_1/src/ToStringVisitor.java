@@ -1,8 +1,8 @@
-public class ToStringVisitor implements ExpressionVisitor {
+public class ToStringVisitor implements ExpressionVisitor<String> {
     private ToStringVisitor() {}
 
     @Override
-    public Object visitBinaryExpression(BinaryExpression expr) {
+    public String visitBinaryExpression(BinaryExpression expr) {
         return expr.getLeft().accept(this) +
                 switch (expr.getOperation()) {
                     case ADD -> " + ";
@@ -14,20 +14,20 @@ public class ToStringVisitor implements ExpressionVisitor {
     }
 
     @Override
-    public Object visitLiteral(Literal expr) {
+    public String visitLiteral(Literal expr) {
         return String.valueOf(expr.getValue());
     }
 
     @Override
-    public Object visitVariable(Variable expr) {
+    public String visitVariable(Variable expr) {
         return expr.getName();
     }
 
     @Override
-    public Object visitParenthesis(ParenthesisExpression expression) {
+    public String visitParenthesis(ParenthesisExpression expression) {
         return "(" + expression.getExpr().accept(this) + ")";
 
     }
 
-    public static ToStringVisitor INSTANCE = new ToStringVisitor();
+    public static ExpressionVisitor<String> INSTANCE = new ToStringVisitor();
 }

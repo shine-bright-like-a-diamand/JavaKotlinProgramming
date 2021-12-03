@@ -10,8 +10,4 @@ public class ParenthesisExpressionImpl implements ParenthesisExpression {
         return mExpression;
     }
 
-    @Override
-    public Object accept(ExpressionVisitor visitor) {
-        return visitor.visitParenthesis(this);
-    }
 }

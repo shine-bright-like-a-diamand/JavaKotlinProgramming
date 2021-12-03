@@ -10,8 +10,4 @@ public class LiteralImpl implements Literal {
         return value;
     }
 
-    @Override
-    public Object accept(ExpressionVisitor visitor) {
-        return visitor.visitLiteral(this);
-    }
 }

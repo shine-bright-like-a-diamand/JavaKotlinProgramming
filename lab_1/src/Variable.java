@@ -1,16 +1,8 @@
-public class Variable implements Expression {
-    private final String name;
-
-    public Variable(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
+public interface Variable extends Expression {
+    String getName();
 
     @Override
-    public Object accept(ExpressionVisitor visitor) {
+    default <T> T accept(ExpressionVisitor<T> visitor) {
         return visitor.visitVariable(this);
     }
 }

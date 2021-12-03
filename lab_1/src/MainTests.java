@@ -26,10 +26,10 @@ public class MainTests {
         double[] compute_test = new double[]{84, 42, 1769, 160, 4};
         for (int i = 0; i < 5; i++) {
             Expression expr = new ParserImpl().parseExpression(expressions[i]);
-            expectEqual(to_string_test[i], (String) expr.accept(ToStringVisitor.INSTANCE));
+            expectEqual(to_string_test[i],  expr.accept(ToStringVisitor.INSTANCE));
             expectEqual(debug_representation_test[i],
-                    (String) expr.accept(DebugRepresentationExpressionVisitor.INSTANCE));
-            expectEqual(compute_test[i], (double) expr.accept(new ComputeExpressionVisitor(null)));
+                     expr.accept(DebugRepresentationExpressionVisitor.INSTANCE));
+            expectEqual(compute_test[i],  expr.accept(new ComputeExpressionVisitor(null)));
         }
     }
 }
