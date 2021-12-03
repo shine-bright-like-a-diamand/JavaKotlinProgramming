@@ -12,8 +12,8 @@ public class Main {
                 System.out.println("entered expression: " + expression.accept(ToStringVisitor.INSTANCE));
                 System.out.println("tree: " + expression.accept(DebugRepresentationExpressionVisitor.INSTANCE));
                 System.out.println("tree depth: " + expression.accept(DepthTreeVisitor.INSTANCE));
-                var variables = expression.accept(new VariableVisitor());
-                double result = expression.accept(new ComputeExpressionVisitor(variables));
+                var variables = (Map<String, Double>) expression.accept(new VariableVisitor());
+                double result = (Double) expression.accept(new ComputeExpressionVisitor(variables));
                 System.out.println("result: " + result);
             } catch (Exception exception){
                 System.out.println(exception.getMessage() + "\n");

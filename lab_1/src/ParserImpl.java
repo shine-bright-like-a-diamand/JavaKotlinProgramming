@@ -1,44 +1,26 @@
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Stack;
 
 public class ParserImpl implements Parser {
 
-    enum TokenType {
-        NUM,
-        VAR,
-        OP,
-        BKT
-    }
-
-    private class Token {
-        Token(String str, TokenType tokenType) {
-            this.str = str;
-            this.tokenType = tokenType;
-        }
-
-        String str;
-        TokenType tokenType;
-    }
-
-    private ArrayList<Token> tokenize(String expr) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        int parenthesesCounter = 0;
+    private ArrayList<Expression> tokenize(String expr) {
+        ArrayList<Expression> tokens = new ArrayList<>();
+        int parentheses_counter = 0;
         for (int i = 0; i < expr.length(); i++) {
             char ch = expr.charAt(i);
             if (ch == ' ') {
                 continue;
             }
-            Token token;
+            Expression token;
             if (Character.isLetter(ch)) {
-                token = new Token(String.valueOf(ch), TokenType.VAR);
+                token = new Variable(String.valueOf(ch));
             } else if (ch == '(') {
-                token = new Token(String.valueOf(ch), TokenType.BKT);
-                parenthesesCounter++;
+                token = new ParenthesisExpressionImpl(BracketType.OPEN);
+                parentheses_counter++;
             } else if (ch == ')') {
-                token = new Token(String.valueOf(ch), TokenType.BKT);
-                parenthesesCounter--;
-                if (parenthesesCounter < 0) {
+                token = new ParenthesisExpressionImpl(BracketType.CLOSE);
+                parentheses_counter--;
+                if (parentheses_counter < 0) {
                     throw new RuntimeException("Wrong parentheses placement");
                 }
             } else if (isLiteral(ch) || ch =='.') {
@@ -52,38 +34,45 @@ public class ParserImpl implements Parser {
                         break;
                     }
                 }
-                token = new Token(builder.toString(), TokenType.NUM);
+                token = new LiteralImpl(Double.parseDouble(builder.toString()));
             } else if (isOperator(ch)) {
-                token = new Token(String.valueOf(ch), TokenType.OP);
+                BinOpKind bin_op_kind = switch (ch) {
+                    case '+' -> BinOpKind.ADD;
+                    case '-' -> BinOpKind.SUB;
+                    case '*' -> BinOpKind.MUL;
+                    case '/' -> BinOpKind.DIV;
+                    default -> throw new RuntimeException("Invalid char in input");
+                };
+                token = new BinaryExpressionImpl(bin_op_kind, null, null);
             } else {
                 throw new RuntimeException("Invalid char in input");
             }
             tokens.add(token);
         }
-        if (parenthesesCounter != 0) {
+        if (parentheses_counter != 0) {
             throw new RuntimeException("Wrong parentheses placement");
         }
         return tokens;
     }
 
-    private ArrayList<Token> toPostfix(ArrayList<Token> tokens) {
-        ArrayList<Token> result = new ArrayList<>();
-        Stack<Token> stack = new Stack<>();
+    private ArrayList<Expression> toPostfix(ArrayList<Expression> tokens) {
+        ArrayList<Expression> result = new ArrayList<>();
+        Stack<Expression> stack = new Stack<>();
         for (var token : tokens) {
-            if (token.tokenType == TokenType.NUM || token.tokenType == TokenType.VAR) {
+            if (token instanceof LiteralImpl || token instanceof Variable) {
                 result.add(token);
-            } else if (token.tokenType == TokenType.OP) {
+            } else if (token instanceof BinaryExpressionImpl) {
                 while (((!stack.empty() && Priority(stack.peek()) >= Priority(token)))) {
                     result.add(stack.peek());
                     stack.pop();
                 }
                 stack.push(token);
-            } else if (token.tokenType == TokenType.BKT) {
-                if (Objects.equals(token.str, "(")) {
+            } else if (token instanceof ParenthesisExpressionImpl bracket) {
+                if (bracket.bracket_type == BracketType.OPEN) {
                     stack.push(token);
                 } else {
-                    while ((!(stack.peek().tokenType == TokenType.BKT)) ||
-                            (Objects.equals(stack.peek().str, ")"))) {
+                    while ((!(stack.peek() instanceof ParenthesisExpressionImpl)) ||
+                            (((ParenthesisExpressionImpl) stack.peek()).bracket_type != BracketType.OPEN)) {
                         result.add(stack.peek());
                         stack.pop();
                     }
@@ -98,45 +87,28 @@ public class ParserImpl implements Parser {
         return result;
     }
 
-    private Expression toTree(ArrayList<Token> postfixTokens) {
+    private Expression toTree(ArrayList<Expression> postfix_tokens) {
         Stack<Expression> stack = new Stack<>();
-        for (var token : postfixTokens) {
-            if (token.tokenType == TokenType.BKT) {
-                if (Objects.equals(token.str, ")")) {
-                    Expression lExpr = stack.pop();
-                    stack.push(new ParenthesisExpressionImpl(lExpr));
+        for (var token : postfix_tokens) {
+            if (token instanceof ParenthesisExpressionImpl) {
+                if (((ParenthesisExpressionImpl)token).bracket_type == BracketType.CLOSE) {
+                    Expression l_expr = stack.pop();
+                    stack.push(new ParenthesisExpressionImpl(l_expr, null));
                 }
                 continue;
             }
-            if (!(token.tokenType == TokenType.NUM || token.tokenType == TokenType.VAR)) {
-                Expression rExpr = stack.pop();
-                Expression lExpr = stack.pop();
-                stack.push(new BinaryExpressionImpl(((BinaryExpression)tokenToExpression(token)).getOperation(),
-                        lExpr, rExpr));
+            if (!(token instanceof LiteralImpl || token instanceof Variable)) {
+                Expression right_expr = stack.pop();
+                Expression left_expr = stack.pop();
+                stack.push(new BinaryExpressionImpl(((BinaryExpressionImpl) token).getOperation(),
+                        left_expr, right_expr));
             } else {
-                stack.push(tokenToExpression(token));
+                stack.push(token);
             }
         }
         return stack.peek();
     }
 
-    private Expression tokenToExpression(Token token) {
-       return switch (token.tokenType) {
-           case NUM -> new LiteralImpl(Double.parseDouble(token.str));
-           case VAR -> new VariableImpl(token.str);
-           case OP -> {
-               BinOpKind binOpKind = switch (token.str) {
-                   case "+" -> BinOpKind.ADD;
-                   case "-" -> BinOpKind.SUB;
-                   case "/" -> BinOpKind.DIV;
-                   case "*" -> BinOpKind.MUL;
-                   default -> null;
-               };
-               yield  new BinaryExpressionImpl(binOpKind, null, null);
-           }
-           case BKT -> null;
-       };
-    }
     private boolean isOperator(char ch) {
         return ch == '+' || ch == '-' || ch == '*' || ch == '/';
     }
@@ -145,20 +117,20 @@ public class ParserImpl implements Parser {
         return '0' <= ch && ch <= '9';
     }
 
-    private int Priority(Token token) {
-        if (token.tokenType == TokenType.OP) {
-            if (Objects.equals(token.str, "*")
-                    || Objects.equals(token.str, "/")) {
+    private int Priority(Expression token) {
+        if (token instanceof BinaryExpressionImpl expr) {
+            if (expr.getOperation() == BinOpKind.MUL
+                    || expr.getOperation() == BinOpKind.DIV) {
                 return 1;
-            } else if (Objects.equals(token.str, "+")
-                    || Objects.equals(token.str, "-")) {
+            } else if (expr.getOperation() == BinOpKind.ADD
+                    || expr.getOperation() == BinOpKind.SUB) {
                 return 0;
             }
         }
         return -1;
     }
 
-    private void checkExprValidity(ArrayList<Token> tokens) {
+    private void checkExprValidity(ArrayList<Expression> tokens) {
         if (tokens.size() % 2 != 1) {
             throw new RuntimeException("Invalid expression");
         }
@@ -166,12 +138,13 @@ public class ParserImpl implements Parser {
             if (i == tokens.size() - 1) {
                 break;
             }
-            if (((tokens.get(i).tokenType ==  TokenType.NUM) || (tokens.get(i).tokenType == TokenType.VAR)) &&
-                    ((tokens.get(i+1).tokenType ==  TokenType.NUM) || (tokens.get(i+1).tokenType == TokenType.VAR))) {
+            if (((tokens.get(i) instanceof LiteralImpl) || (tokens.get(i) instanceof Variable)) &&
+                    ((tokens.get(i + 1) instanceof LiteralImpl) || (tokens.get(i + 1) instanceof Variable)) ) {
                 throw new RuntimeException("Invalid expression");
             }
-            if (((tokens.get(i).tokenType == TokenType.OP) || (Objects.equals(tokens.get(i).str, "(")))
-                    && (tokens.get(i + 1).tokenType == TokenType.OP)) {
+            if (((tokens.get(i) instanceof BinaryExpressionImpl) || (tokens.get(i) instanceof ParenthesisExpressionImpl
+                    && ((ParenthesisExpressionImpl)tokens.get(i)).bracket_type == BracketType.OPEN)) &&
+                    ((tokens.get(i + 1) instanceof BinaryExpressionImpl))) {
                 throw new RuntimeException("Invalid expression");
             }
         }
@@ -179,7 +152,7 @@ public class ParserImpl implements Parser {
 
     @Override
     public Expression parseExpression(String input) {
-        ArrayList<Token> tokens = tokenize(input);
+        ArrayList<Expression> tokens = tokenize(input);
         checkExprValidity(tokens);
         return toTree(toPostfix(tokens));
     }

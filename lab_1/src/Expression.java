@@ -1,3 +1,3 @@
 public interface Expression {
-    <T> T accept(ExpressionVisitor<T> visitor);
+    Object accept(ExpressionVisitor visitor);
 }

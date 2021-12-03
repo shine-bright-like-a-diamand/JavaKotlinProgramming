@@ -1,33 +1,33 @@
-public class DebugRepresentationExpressionVisitor implements ExpressionVisitor<String>{
+public class DebugRepresentationExpressionVisitor implements ExpressionVisitor{
     private DebugRepresentationExpressionVisitor() {}
 
+    public static DebugRepresentationExpressionVisitor INSTANCE = new DebugRepresentationExpressionVisitor();
+
     @Override
-    public String visitBinaryExpression(BinaryExpression expr) {
-        String leftResult = expr.getLeft().accept(this);
-        String rightResult = expr.getRight().accept(this);
+    public Object visitBinaryExpression(BinaryExpression expr) {
+        String left_result = (String) expr.getLeft().accept(this);
+        String right_result = (String) expr.getRight().accept(this);
         String result = switch (expr.getOperation()) {
             case ADD -> "add(";
             case SUB -> "sub(";
             case MUL -> "mul(";
             case DIV -> "div(";
         };
-        return result + leftResult + ", " + rightResult + ")";
+        return result + left_result + ", " + right_result + ")";
     }
 
     @Override
-    public String visitLiteral(Literal expr) {
+    public Object visitLiteral(Literal expr) {
         return "'" + expr.getValue() + "'";
     }
 
     @Override
-    public String visitVariable(Variable expr) {
+    public Object visitVariable(Variable expr) {
         return "var[" +expr.getName() + "]";
     }
 
     @Override
-    public String visitParenthesis(ParenthesisExpression expression) {
+    public Object visitParenthesis(ParenthesisExpression expression) {
         return "paran-expr(" + expression.getExpr().accept(this) + ")";
     }
-
-    public static ExpressionVisitor<String> INSTANCE = new DebugRepresentationExpressionVisitor();
 }
