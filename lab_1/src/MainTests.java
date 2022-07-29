@@ -15,7 +15,7 @@ public class MainTests {
     }
 
     public static void main(String[] args) {
-        String[] expressions = new String[]{"( 42   + 42) ", "42", "(42        * 42) + 5", "(42-2)*4",
+        String[] expressions = new String[]{"( 42+42) ", "42", "(42        * 42) + 5", "(42-2)*4",
                 "((2 + 4 )/ 3 - 6  )*(5 - 6  ) "};
         String[] to_string_test = new String[]{"(42.0 + 42.0)", "42.0", "(42.0 * 42.0) + 5.0", "(42.0 - 2.0) * 4.0",
                 "((2.0 + 4.0) / 3.0 - 6.0) * (5.0 - 6.0)"};
